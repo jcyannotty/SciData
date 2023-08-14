@@ -1,5 +1,7 @@
 """
 https://claut.gitlab.io/man_ccia/lab2.html
+
+https://nordicesmhub.github.io/NEGI-Abisko-2019/training/CMIP6_example.html
 """
 
 import pandas as pd
@@ -19,8 +21,53 @@ import cftime
 from tqdm import tqdm
 from pyesgf.search import SearchConnection
 
+#----------------------------------------------------------
+# TAS from BCC
+#----------------------------------------------------------
+cmip6path = "/home/johnyannotty/NOAA_DATA/CMIP6/"
+#filename = "tas_Amon_CESM2_historical_r1i1p1f1_gn_185001-201412.nc"
+filename =  "tas_Amon_ACCESS-CM2_historical_r1i1p1f1_gn_185001-201412.nc"
+dset = xr.open_dataset(cmip6path+filename, decode_times=True, use_cftime=True)
+
+print(dset)
+dset["tas"][0][0].values
 
 
+dset.attrs.keys()
+dset.attrs["tracking_id"]
+dset.coords["time"].as_numpy().shape
+dset.coords["lat"].as_numpy().shape
+dset.coords["lon"].as_numpy().shape
+xx = dset["tas"].as_numpy()
+xx.shape
+
+
+
+lat = dset['tas']["lat"].as_numpy()
+lon = dset['tas']["lon"].as_numpy()
+tm = dset['tas']["time"].as_numpy()
+
+#tas = dset["tas"].to_numpy()
+#tas[0].size
+
+tas = dset['tas'].where(dset.time.isin(cftime.DatetimeProlepticGregorian(1950, 1, 16, 12, 0, 0, 0, 2, 15)), drop=True)
+tas.plot()
+plt.show()
+
+#tas = dset['tas'].sel(time=cftime.DatetimeNoLeap(1850, 1, 16, 12, 0, 0, 0, 2, 15))
+tas_np = tas.to_numpy()
+tas_np.size
+tas_np[10].size
+
+del tas
+del dset
+
+
+
+
+#----------------------------------------------------------
+# TA from BCC
+#----------------------------------------------------------
 cmip6path = "/home/johnyannotty/NOAA_DATA/CMIP6/"
 #filename = "tas_Amon_CESM2_historical_r1i1p1f1_gn_185001-201412.nc"
 filename =  "ta_Amon_BCC-CSM2-MR_hist-nat_r1i1p1f1_gn_197001-200912.nc"
@@ -62,6 +109,8 @@ tas_np[10].size
 del tas
 del dset
 
+#----------------------------------------------------------
+# Old Code
 
 # necessary url
 #url = "https://raw.githubusercontent.com/NCAR/intake-esm-datastore/master/catalogs/pangeo-cmip6.json"
@@ -104,8 +153,6 @@ for i in tqdm(range(stop)):
 
 pd.DataFrame(files_list).loc[2,0]
 pd.DataFrame(files_list).loc[2,1]
-
-
 
 
 query = conn.new_context(

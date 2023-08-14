@@ -1,0 +1,63 @@
+#----------------------------------------------------------------------------------------------------
+CMIP6 Simulator Information
+CMIP6 reference: https://esgf-node.llnl.gov/search/cmip6/
+
+#----------------------------------------------------------------------------------------------------
+Average Surface Temperature (tas)
+#----------------------------------------------------------------------------------------------------
+CMIP6.CMIP.CSIRO-ARCCSS.ACCESS-CM2.historical.r1i1p1f1.Amon.tas.gn
+Data Node: esgf.nci.org.au
+Version: 20191108
+tas_Amon_ACCESS-CM2_historical_r1i1p1f1_gn_185001-201412.nc
+http://esgf.nci.org.au/thredds/fileServer/master/CMIP6/CMIP/CSIRO-ARCCSS/ACCESS-CM2/historical/r1i1p1f1/Amon/tas/gn/v20191108/tas_Amon_ACCESS-CM2_historical_r1i1p1f1_gn_185001-201412.nc
+
+
+
+CMIP6.CMIP.BCC.BCC-CSM2-MR.historical.r1i1p1f1.Amon.tas.gn
+Data Node: aims3.llnl.gov
+Version: 20181126
+tas_Amon_BCC-CSM2-MR_historical_r1i1p1f1_gn_185001-201412.nc
+http://aims3.llnl.gov/thredds/fileServer/css03_data/CMIP6/CMIP/BCC/BCC-CSM2-MR/historical/r1i1p1f1/Amon/tas/gn/v20181126/tas_Amon_BCC-CSM2-MR_historical_r1i1p1f1_gn_185001-201412.nc
+
+
+
+CMIP6.CMIP.CMCC.CMCC-CM2-SR5.historical.r1i1p1f1.Amon.tas.gn
+Data Node: esgf-node2.cmcc.it
+Version: 20200616
+tas_Amon_CMCC-CM2-SR5_historical_r1i1p1f1_gn_185001-201412.nc
+http://esgf-node2.cmcc.it/thredds/fileServer/esg_dataroot/CMIP6/CMIP/CMCC/CMCC-CM2-SR5/historical/r1i1p1f1/Amon/tas/gn/v20200616/tas_Amon_CMCC-CM2-SR5_historical_r1i1p1f1_gn_185001-201412.nc
+
+
+
+CMIP6.CMIP.CCCma.CanESM5.historical.r1i1p2f1.Amon.tas.gn ******
+Data Node: crd-esgf-drc.ec.gc.ca
+Version: 20190429'tas_Amon_CanESM5_historical_r1i1p2f1_gn_185001-201412.nc
+http://crd-esgf-drc.ec.gc.ca/thredds/fileServer/esgC_dataroot/AR6/CMIP6/CMIP/CCCma/CanESM5/historical/r1i1p2f1/Amon/tas/gn/v20190429/tas_Amon_CanESM5_historical_r1i1p2f1_gn_185001-201412.nc
+
+
+
+CMIP6.CMIP.CCCma.CanESM5.historical.r7i1p2f1.Amon.tas.gn
+Data Node: crd-esgf-drc.ec.gc.ca
+Version: 20190429
+tas_Amon_CanESM5_historical_r7i1p2f1_gn_185001-201412.nc 
+http://crd-esgf-drc.ec.gc.ca/thredds/fileServer/esgC_dataroot/AR6/CMIP6/CMIP/CCCma/CanESM5/historical/r7i1p2f1/Amon/tas/gn/v20190429/tas_Amon_CanESM5_historical_r7i1p2f1_gn_185001-201412.nc
+
+
+
+CMIP6.CMIP.CCCma.CanESM5.historical.r8i1p2f1.Amon.tas.gn
+Data Node: crd-esgf-drc.ec.gc.ca
+Version: 20190429
+tas_Amon_CanESM5_historical_r8i1p2f1_gn_185001-201412.nc
+http://crd-esgf-drc.ec.gc.ca/thredds/fileServer/esgC_dataroot/AR6/CMIP6/CMIP/CCCma/CanESM5/historical/r8i1p2f1/Amon/tas/gn/v20190429/tas_Amon_CanESM5_historical_r8i1p2f1_gn_185001-201412.nc
+
+
+#----------------------------------------------------------------------------------------------------
+Average Temperature (ta)
+#----------------------------------------------------------------------------------------------------
+CMIP6.DAMIP.BCC.BCC-CSM2-MR.hist-nat.r1i1p1f1.Amon.ta.gn
+Data Node: cmip.bcc.cma.cn
+Version: 20190426
+ta_Amon_BCC-CSM2-MR_hist-nat_r1i1p1f1_gn_197001-200912.nc
+http://cmip.bcc.cma.cn/thredds/fileServer/cmip6_data/DAMIP/BCC/BCC-CSM2-MR/hist-nat/r1i1p1f1/Amon/ta/gn/v20190426/ta_Amon_BCC-CSM2-MR_hist-nat_r1i1p1f1_gn_197001-200912.nc
+ta_Amon_BCC-CSM2-MR_hist-nat_r1i1p1f1_gn_201001-202012.nc
+http://cmip.bcc.cma.cn/thredds/fileServer/cmip6_data/DAMIP/BCC/BCC-CSM2-MR/hist-nat/r1i1p1f1/Amon/ta/gn/v20190426/ta_Amon_BCC-CSM2-MR_hist-nat_r1i1p1f1_gn_201001-202012.nc
