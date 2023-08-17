@@ -31,7 +31,8 @@ http://esgf-node2.cmcc.it/thredds/fileServer/esg_dataroot/CMIP6/CMIP/CMCC/CMCC-C
 
 CMIP6.CMIP.CCCma.CanESM5.historical.r1i1p2f1.Amon.tas.gn ******
 Data Node: crd-esgf-drc.ec.gc.ca
-Version: 20190429'tas_Amon_CanESM5_historical_r1i1p2f1_gn_185001-201412.nc
+Version: 20190429
+tas_Amon_CanESM5_historical_r1i1p2f1_gn_185001-201412.nc
 http://crd-esgf-drc.ec.gc.ca/thredds/fileServer/esgC_dataroot/AR6/CMIP6/CMIP/CCCma/CanESM5/historical/r1i1p2f1/Amon/tas/gn/v20190429/tas_Amon_CanESM5_historical_r1i1p2f1_gn_185001-201412.nc
 
 
@@ -49,6 +50,20 @@ Data Node: crd-esgf-drc.ec.gc.ca
 Version: 20190429
 tas_Amon_CanESM5_historical_r8i1p2f1_gn_185001-201412.nc
 http://crd-esgf-drc.ec.gc.ca/thredds/fileServer/esgC_dataroot/AR6/CMIP6/CMIP/CCCma/CanESM5/historical/r8i1p2f1/Amon/tas/gn/v20190429/tas_Amon_CanESM5_historical_r8i1p2f1_gn_185001-201412.nc
+
+
+CMIP6.CMIP.CCCma.CanESM5.historical.r1i1p2f1.Amon.tas.gn
+Data Node: crd-esgf-drc.ec.gc.ca
+Version: 20190429
+tas_Amon_FIO-ESM-2-0_ssp245_r1i1p1f1_gn_201501-210012.nc 
+http://esgf-data1.llnl.gov/thredds/fileServer/css03_data/CMIP6/ScenarioMIP/FIO-QLNM/FIO-ESM-2-0/ssp245/r1i1p1f1/Amon/tas/gn/v20191226/tas_Amon_FIO-ESM-2-0_ssp245_r1i1p1f1_gn_201501-210012.nc
+
+
+CMIP6.CMIP.MIROC.MIROC-ES2L.historical.r1i1p1f2.Amon.tas.gn
+Data Node: esgf-data02.diasjp.net
+Version: 20190823
+tas_Amon_MIROC-ES2L_historical_r1i1p1f2_gn_185001-201412.nc
+http://esgf-data02.diasjp.net/thredds/fileServer/esg_dataroot/CMIP6/CMIP/MIROC/MIROC-ES2L/historical/r1i1p1f2/Amon/tas/gn/v20190823/tas_Amon_MIROC-ES2L_historical_r1i1p1f2_gn_185001-201412.nc
 
 
 #----------------------------------------------------------------------------------------------------
