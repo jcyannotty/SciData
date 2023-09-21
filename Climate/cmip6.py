@@ -3,21 +3,18 @@ https://claut.gitlab.io/man_ccia/lab2.html
 
 https://nordicesmhub.github.io/NEGI-Abisko-2019/training/CMIP6_example.html
 
-Motivated by:
+https://netcdf-scm.readthedocs.io/en/latest/usage/ocean-data.html
+
 """
 
 import pandas as pd
 import numpy as np
-import json
-import requests
 import os
 
-#import intake
 import xarray as xr 
 import proplot as plot 
 import matplotlib.pyplot as plt
 
-#import cartopy.crs as ccrs
 import cftime
 
 from tqdm import tqdm
@@ -48,9 +45,11 @@ file_list = [f for f in file_list if "tas_" in f]
 tas_data = []
 lat_data = []
 lon_data = []
-
+fillval_data = []
+i = 0
 for f in file_list:
     ncdata = nc.Dataset(cmip6path + f, "r")
+    print(i)
 
     # Get index and appropriate time period
     tp = get_timeperiod(f)
@@ -66,6 +65,9 @@ for f in file_list:
     #xi = np.rot90(xi, k = 2, axes = (1, 2))
     #xi = np.flip(xi, axis = 2)
 
+    # Get the fill values
+    fv = ncdata.variables['tas']._FillValue
+
     # Get longitude and latitude
     lat = np.array(ncdata.variables["lat"])
     lon = np.array(ncdata.variables["lon"])
@@ -74,21 +76,66 @@ for f in file_list:
     tas_data.append(xi)
     lat_data.append(lat)
     lon_data.append(lon)
+    fillval_data.append(fv)
+    i+=1
 
+len(lat_data)
+
+# Check for missing data
+np.where(xi[100] == fv + 272.15)
 
 #----------------------------------------------------------
 # ERA5 Pull
 #----------------------------------------------------------
 era5path = "/home/johnyannotty/NOAA_DATA/ERA5/"
-#ncdata = nc.Dataset(era5path + 'era5_avg_mon_tas/data_1990-2023.nc', "r")
+ncdata = nc.Dataset(era5path + 'era5_avg_mon_tas/data_1990-2023.nc', "r")
 #ncdata = nc.Dataset(era5path + 'era5_land_avg_mon_tas_1990-2023/data.nc', "r")
 y = ncdata.variables['t2m']
 era5_lon = np.array(ncdata.variables['longitude'])
 era5_lat = np.array(ncdata.variables['latitude'])
 
+y.shape
 
 # Need to do this in batches.....
-np.array(y[0][0][:5,:5]) - 272.15
+np.array(y[0][0][:5,:]) - 272.15
+
+era5 = xr.open_dataset(era5path + 'era5_avg_mon_tas/data_1990-2023.nc', decode_times=True, use_cftime=True)
+
+fig, ax = plt.subplots(1,1,figsize = (15,10)) 
+xx = np.where(era5["t2m"][:,0,:,:].time.isin(cftime.DatetimeGregorian(1990, 1, 1, 0, 0, 0, 0, 2, 15)))[0][0]
+era5["t2m"][xx,0,:,:].plot(cmap = "coolwarm", ax = ax, vmin = 200, vmax = 325)
+#era5["t2m"][xx,0,:,:].plot(cmap = "coolwarm", ax = ax, vmin = -75, vmax = 50)
+plt.show()
+
+era5["t2m"][xx,0,:,:] = era5["t2m"][xx,0,:,:] - 272.15
+
+
+
+# import geopandas as gpd
+# from shapely import Point
+
+# temp_data = pd.DataFrame(tas_data[1][200].reshape(tas_data[1][200].size))
+# temp_data.columns = ["tas"]
+
+# lat_vec = np.repeat(lat_data[1],lon_data[1].shape[0])
+# lon_vec = np.resize(lon_data[1],lat_data[1].shape[0]*lon_data[1].shape[0])
+# lon_lat_df = pd.DataFrame(np.concatenate([lat_vec,lon_vec]).reshape(2,int(len(lon_vec))).transpose())
+
+# temp_yr_geo_df = pd.concat([lon_lat_df,temp_data], axis = 1)
+# temp_yr_geo_df.rename(columns={0:"Lat",1:"Long"}, inplace = True)
+
+# geom = [Point(xy) for xy in zip(temp_yr_geo_df['Long'],temp_yr_geo_df['Lat'])]
+# gdf = gpd.GeoDataFrame(temp_data, geometry=geom)
+# world = gpd.read_file(gpd.datasets.get_path("naturalearth_lowres"))
+# gdf.plot(column = "tas", marker='o', markersize=15,
+#          cmap='viridis', legend=True, ax = world.plot(figsize=(15, 15), color = "lightgrey"),vmin = 200, vmax = 300,
+#          legend_kwds={"label": "Average Temperature in January 2005", "orientation": "horizontal","shrink":0.6}
+# )
+# plt.xlabel("Longitude")
+# plt.ylabel("Latitude")
+# plt.title("Average Monthly Temperatue in January ", size = 24)
+# plt.show()
+
 
 
 # print(dset)
