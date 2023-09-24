@@ -22,7 +22,7 @@ from pyesgf.search import SearchConnection
 
 import netCDF4 as nc
 
-
+from Climate.src.interpolators import bilinear
 
 #----------------------------------------------------------
 # Functions
@@ -110,6 +110,30 @@ plt.show()
 era5["t2m"][xx,0,:,:] = era5["t2m"][xx,0,:,:] - 272.15
 
 
+# nlon = lon_data[0].shape[0]
+# nlat = lat_data[0].shape[0]
+# lon_grid = lon_data[0].repeat(nlat).reshape(nlon,nlat)
+# lat_grid = lat_data[0].repeat(nlon).reshape(nlat,nlon).transpose()
+# plt.scatter(lon_grid,lat_grid)
+# plt.show()
+
+
+cmap = plt.get_cmap('viridis')
+fig, ax = plt.subplots(1,2, figsize = (12,5))
+
+pcm1 = ax[0].pcolormesh(tas_data[0][100],cmap = cmap)
+ax[0].set_title("Original", size = 16)
+ax[0].set(xlabel = "$x_1$", ylabel = "$x_2$")
+#ax[0].xaxis.set_major_locator(ticker.FixedLocator(np.round(np.linspace(0, n_test, 6),3)))
+#ax[0].xaxis.set_major_formatter(ticker.FixedFormatter(np.round(np.linspace(-np.pi, np.pi, 6),3)))
+#ax[0].yaxis.set_major_locator(ticker.FixedLocator(np.round(np.linspace(0, n_test, 6),3)))
+#ax[0].yaxis.set_major_formatter(ticker.FixedFormatter(np.round(np.linspace(-np.pi, np.pi, 6),3)))
+fig.colorbar(pcm1,ax = ax[0])
+
+bilinear(271.3, 31.4, np.array(lon_data[0]),np.array(lat_data[0]),tas_data[0][100])
+
+
+
 
 # import geopandas as gpd
 # from shapely import Point
@@ -135,6 +159,36 @@ era5["t2m"][xx,0,:,:] = era5["t2m"][xx,0,:,:] - 272.15
 # plt.ylabel("Latitude")
 # plt.title("Average Monthly Temperatue in January ", size = 24)
 # plt.show()
+
+
+
+
+import geopandas as gpd
+from shapely import Point
+
+temp_data = pd.DataFrame(tas_data[1][200].reshape(tas_data[1][200].size))
+temp_data.columns = ["tas"]
+
+lat_vec = np.repeat(lat_data[1],lon_data[1].shape[0])
+lon_vec = np.resize(lon_data[1],lat_data[1].shape[0]*lon_data[1].shape[0])
+lon_lat_df = pd.DataFrame(np.concatenate([lat_vec,lon_vec]).reshape(2,int(len(lon_vec))).transpose())
+
+temp_yr_geo_df = pd.concat([lon_lat_df,temp_data], axis = 1)
+temp_yr_geo_df.rename(columns={0:"Lat",1:"Long"}, inplace = True)
+
+geom = [Point(xy) for xy in zip(temp_yr_geo_df['Long'],temp_yr_geo_df['Lat'])]
+gdf = gpd.GeoDataFrame(temp_data, geometry=geom)
+world = gpd.read_file(gpd.datasets.get_path("naturalearth_lowres"))
+gdf.plot(column = "tas", marker='o', markersize=15,
+          cmap='viridis', legend=True, ax = world.plot(figsize=(15, 15), color = "lightgrey"),vmin = 200, vmax = 300,
+          legend_kwds={"label": "Average Temperature in January 2005", "orientation": "horizontal","shrink":0.6}
+)
+plt.xlabel("Longitude")
+plt.ylabel("Latitude")
+plt.title("Average Monthly Temperatue in January ", size = 24)
+plt.show()
+
+
 
 
 
