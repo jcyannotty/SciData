@@ -110,6 +110,80 @@ plt.show()
 era5["t2m"][xx,0,:,:] = era5["t2m"][xx,0,:,:] - 272.15
 
 
+#----------------------------------------------------------
+# CMIP6 interpolations
+#----------------------------------------------------------
+cmip6intpath = '/home/johnyannotty/NOAA_DATA/CMIP6_Interpolations/'
+f = file_list[0]
+f = f.split("185")[0] + "2005-2015.nc"
+ncfile = nc.Dataset(cmip6intpath + f,mode='w',format='NETCDF4_CLASSIC')
+
+
+lat_dim = ncfile.createDimension('lat', era5_lat.shape[0])     # latitude axis
+lon_dim = ncfile.createDimension('lon', era5_lon.shape[0])    # longitude axis
+time_dim = ncfile.createDimension('time', tas_data[0].shape[0]) # unlimited axis (can be appended to).
+
+ncfile.title=f
+ncfile.subtitle='TAS Interpolations'
+
+lat = ncfile.createVariable('lat', np.float32, ('lat',))
+lat.long_name = 'latitude'
+
+lon = ncfile.createVariable('lon', np.float32, ('lon',))
+lon.long_name = 'longitude'
+
+time = ncfile.createVariable('time', np.float64, ('time',))
+time.units = 'months since 1950-01-01'
+time.long_name = 'time'
+
+temp = ncfile.createVariable('tas',np.float64,('time','lon','lat')) # note: unlimited dimension is leftmost
+temp.units = 'C'
+temp.standard_name = 't2m'
+
+
+# Batch Interpolations....(batch over time, long and lat)
+batch_sz = 100 # number of columns per batch with 1440 rows 
+nrow = era5_lon.shape[0]
+#num_tpds = tas_data[0].shape[0] # number of time periods
+num_tpds = 12 # last 10 years of data
+era5_lat_flip = np.flip(era5_lat)
+
+for i in tqdm(range(num_tpds),desc = "Time Period",leave=False):
+    tm = tas_data[0].shape[0] - num_tpds + i
+    for b in tqdm(range(int(np.ceil(era5_lat.shape[0]/batch_sz))),desc = "Batch",leave=False):
+        ncol = min(batch_sz, era5_lat.shape[0]-b*batch_sz)
+        temp0 = np.array(-999.0).repeat(nrow*ncol).reshape(nrow,ncol)
+        for j in range(nrow):
+            x0 = era5_lon[j]
+            for k in range(ncol):
+                y0 = era5_lat_flip[k]            
+                temp0[j,k] = bilinear(x0, y0, np.array(lon_data[0]),np.array(lat_data[0]),tas_data[0][tm])
+        temp[i,:,range(100*b,ncol+100*b)] = temp0
+
+ncfile.close()
+
+100*era5_lon.shape[0]
+
+temp[i,:,range(100*b,ncol+100*b)].shape
+temp0.shape
+
+
+
+#ncfile.close()
+
+ncdata2 = nc.Dataset(cmip6intpath + f, "r")
+ncdata2["tas"][0]
+
+fig, ax = plt.subplots(3,2,figsize = (15,15)) 
+ncdata2['tas'][0].plot(
+    cmap = 'coolwarm', ax = ax[0][0])
+ax[0][0].set_title("Access CM2 (250 km)", size = 18)
+plt.show()
+
+
+#----------------------------------------------------------
+# Scratch
+#----------------------------------------------------------
 # nlon = lon_data[0].shape[0]
 # nlat = lat_data[0].shape[0]
 # lon_grid = lon_data[0].repeat(nlat).reshape(nlon,nlat)
