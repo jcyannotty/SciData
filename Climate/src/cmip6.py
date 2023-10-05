@@ -102,26 +102,25 @@ np.array(y[0][0][:5,:]) - 272.15
 era5 = xr.open_dataset(era5path + 'era5_avg_mon_tas/data_1990-2023.nc', decode_times=True, use_cftime=True)
 
 fig, ax = plt.subplots(1,1,figsize = (15,10)) 
-xx = np.where(era5["t2m"][:,0,:,:].time.isin(cftime.DatetimeGregorian(1990, 1, 1, 0, 0, 0, 0, 2, 15)))[0][0]
+xx = np.where(era5["t2m"][:,0,:,:].time.isin(cftime.DatetimeGregorian(2014, 12, 1, 0, 0, 0, 0, 2, 15)))[0][0]
 era5["t2m"][xx,0,:,:].plot(cmap = "coolwarm", ax = ax, vmin = 200, vmax = 325)
 #era5["t2m"][xx,0,:,:].plot(cmap = "coolwarm", ax = ax, vmin = -75, vmax = 50)
 plt.show()
 
 era5["t2m"][xx,0,:,:] = era5["t2m"][xx,0,:,:] - 272.15
 
-
 #----------------------------------------------------------
 # CMIP6 interpolations
 #----------------------------------------------------------
 cmip6intpath = '/home/johnyannotty/NOAA_DATA/CMIP6_Interpolations/'
 f = file_list[0]
-f = f.split("185")[0] + "2005-2015.nc"
+#f = f.split("185")[0] + "2005-2015.nc"
+f = f.split("185")[0] + "2015.nc"
 ncfile = nc.Dataset(cmip6intpath + f,mode='w',format='NETCDF4_CLASSIC')
-
 
 lat_dim = ncfile.createDimension('lat', era5_lat.shape[0])     # latitude axis
 lon_dim = ncfile.createDimension('lon', era5_lon.shape[0])    # longitude axis
-time_dim = ncfile.createDimension('time', tas_data[0].shape[0]) # unlimited axis (can be appended to).
+time_dim = ncfile.createDimension('time', 12)#tas_data[0].shape[0]) # unlimited axis (can be appended to).
 
 ncfile.title=f
 ncfile.subtitle='TAS Interpolations'
@@ -136,29 +135,30 @@ time = ncfile.createVariable('time', np.float64, ('time',))
 time.units = 'months since 1950-01-01'
 time.long_name = 'time'
 
-temp = ncfile.createVariable('tas',np.float64,('time','lon','lat')) # note: unlimited dimension is leftmost
+temp = ncfile.createVariable('tas',np.float64,('time','lat','lon')) # note: unlimited dimension is leftmost
 temp.units = 'C'
 temp.standard_name = 't2m'
 
 
 # Batch Interpolations....(batch over time, long and lat)
 batch_sz = 100 # number of columns per batch with 1440 rows 
-nrow = era5_lon.shape[0]
+ncol = era5_lon.shape[0]
 #num_tpds = tas_data[0].shape[0] # number of time periods
-num_tpds = 12 # last 10 years of data
+num_tpds = 1 # last 10 years of data
 era5_lat_flip = np.flip(era5_lat)
 
 for i in tqdm(range(num_tpds),desc = "Time Period",leave=False):
     tm = tas_data[0].shape[0] - num_tpds + i
     for b in tqdm(range(int(np.ceil(era5_lat.shape[0]/batch_sz))),desc = "Batch",leave=False):
-        ncol = min(batch_sz, era5_lat.shape[0]-b*batch_sz)
+        nrow = min(batch_sz, era5_lat.shape[0]-b*batch_sz)
         temp0 = np.array(-999.0).repeat(nrow*ncol).reshape(nrow,ncol)
-        for j in range(nrow):
+        for j in range(ncol):
             x0 = era5_lon[j]
-            for k in range(ncol):
-                y0 = era5_lat_flip[k]            
-                temp0[j,k] = bilinear(x0, y0, np.array(lon_data[0]),np.array(lat_data[0]),tas_data[0][tm])
-        temp[i,:,range(100*b,ncol+100*b)] = temp0
+            for k in range(nrow):
+                #y0 = era5_lat_flip[b*batch_sz+k]
+                y0 = era5_lat[b*batch_sz+k]            
+                temp0[k,j] = bilinear(x0, y0, np.array(lon_data[0]),np.array(lat_data[0]),tas_data[0][tm])
+        temp[i,range(100*b,nrow+100*b),:] = temp0
 
 ncfile.close()
 
@@ -172,13 +172,29 @@ temp0.shape
 #ncfile.close()
 
 ncdata2 = nc.Dataset(cmip6intpath + f, "r")
-ncdata2["tas"][0]
+ncdata2["tas"][0].shape
 
-fig, ax = plt.subplots(3,2,figsize = (15,15)) 
-ncdata2['tas'][0].plot(
-    cmap = 'coolwarm', ax = ax[0][0])
-ax[0][0].set_title("Access CM2 (250 km)", size = 18)
+xx = np.where(era5["t2m"][:,0,:,:].time.isin(cftime.DatetimeGregorian(2014, 12, 1, 0, 0, 0, 0, 2, 15)))[0][0]
+era5["t2m"][xx,0,:,:].transpose() - 272.15 - ncdata2["tas"][0]
+resid = era5["t2m"][xx,0,:,:] - 272.15 - ncdata2["tas"][0]
+
+# Read data back in....
+#ncdata2 = nc.Dataset(cmip6intpath + f, "r")
+
+fig, ax = plt.subplots(1,3,figsize = (16,8)) 
+pcm0 = ax[0].pcolormesh(np.rot90(np.flip(era5["t2m"][xx,0,:,:].transpose() - 272.15),k=3),cmap = "coolwarm",vmin = -50,vmax = 40)
+#ax[0][1].pcolormesh(np.rot90(np.flip(ncdata2['tas'][0].transpose()),k=2))
+pcm1 = ax[1].pcolormesh(np.rot90(np.flip(ncdata2['tas'][0].transpose()),k=3),cmap = "coolwarm",vmin = -50,vmax = 40)
+pcm2 = ax[2].pcolormesh(np.rot90(np.flip(resid.transpose()),k=3),cmap = "PRGn")
+fig.colorbar(pcm0, ax = ax[0], location = "bottom")
+fig.colorbar(pcm1, ax = ax[1], location = "bottom")
+fig.colorbar(pcm2, ax = ax[2], location = "bottom")
+ax[0].set_title("ERA 5 Predictions", size = 18)
+ax[1].set_title("Access-CM2 Interpolations", size = 18)
+ax[2].set_title("Residuals", size = 18)
 plt.show()
+
+
 
 
 #----------------------------------------------------------

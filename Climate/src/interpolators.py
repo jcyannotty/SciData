@@ -166,7 +166,7 @@ def nearest_neighbor(x,y,lon,lat,cmf):
             # Get function values
             fxy = cmf.transpose()[nn[0],nn[1]]
 
-        elif iy2 < nx:
+        elif iy2 < ny:
             # Occurs if x is on or over boundary but y is not
             y1 = lat[iy1]; y2 = lat[iy2]
 
