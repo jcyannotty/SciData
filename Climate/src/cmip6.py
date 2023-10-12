@@ -9,20 +9,19 @@ https://netcdf-scm.readthedocs.io/en/latest/usage/ocean-data.html
 
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 import os
 
-import xarray as xr 
-import proplot as plot 
-import matplotlib.pyplot as plt
-
 import cftime
-
-from tqdm import tqdm
-from pyesgf.search import SearchConnection
-
+import xarray as xr 
 import netCDF4 as nc
 
+from tqdm import tqdm
+from scipy.ndimage import map_coordinates
+from scipy.interpolate import interp2d
+from sklearn.neighbors import KNeighborsRegressor
 from Climate.src.interpolators import bilinear
+
 
 #----------------------------------------------------------
 # Functions
@@ -35,7 +34,7 @@ def get_timeperiod(f):
 #----------------------------------------------------------
 # TAS from list
 #----------------------------------------------------------
-cmip6path = "/home/johnyannotty/NOAA_DATA/CMIP6/"
+cmip6path = "/home/johnyannotty/NOAA_DATA/CMIP6/historical"
 #filename = "tas_Amon_CESM2_historical_r1i1p1f1_gn_185001-201412.nc"
 #filename =  "tas_Amon_ACCESS-CM2_historical_r1i1p1f1_gn_185001-201412.nc"
 #dset = xr.open_dataset(cmip6path+filename, decode_times=True, use_cftime=True)
@@ -82,7 +81,7 @@ for f in file_list:
 len(lat_data)
 
 # Check for missing data
-np.where(xi[100] == fv + 272.15)
+# np.where(xi[100] == fv + 272.15)
 
 #----------------------------------------------------------
 # ERA5 Pull
@@ -90,14 +89,15 @@ np.where(xi[100] == fv + 272.15)
 era5path = "/home/johnyannotty/NOAA_DATA/ERA5/"
 ncdata = nc.Dataset(era5path + 'era5_avg_mon_tas/data_1990-2023.nc', "r")
 #ncdata = nc.Dataset(era5path + 'era5_land_avg_mon_tas_1990-2023/data.nc', "r")
-y = ncdata.variables['t2m']
+#y = ncdata.variables['t2m']
 era5_lon = np.array(ncdata.variables['longitude'])
 era5_lat = np.array(ncdata.variables['latitude'])
 
-y.shape
+ncdata.close()
+del ncdata
 
 # Need to do this in batches.....
-np.array(y[0][0][:5,:]) - 272.15
+# np.array(y[0][0][:5,:]) - 272.15
 
 era5 = xr.open_dataset(era5path + 'era5_avg_mon_tas/data_1990-2023.nc', decode_times=True, use_cftime=True)
 
@@ -110,9 +110,127 @@ plt.show()
 era5["t2m"][xx,0,:,:] = era5["t2m"][xx,0,:,:] - 272.15
 
 #----------------------------------------------------------
-# CMIP6 interpolations
+# CMIP6 bilinear interpolations 
 #----------------------------------------------------------
 cmip6intpath = '/home/johnyannotty/NOAA_DATA/CMIP6_Interpolations/'
+f = file_list[0]
+#f = f.split("185")[0] + "2005-2015.nc"
+f = f.split("185")[0] + "2015.nc"
+ncfile = nc.Dataset(cmip6intpath + f,mode='w',format='NETCDF4_CLASSIC')
+
+lat_dim = ncfile.createDimension('lat', era5_lat.shape[0])     # latitude axis
+lon_dim = ncfile.createDimension('lon', era5_lon.shape[0])    # longitude axis
+time_dim = ncfile.createDimension('time', 12)#tas_data[0].shape[0]) # unlimited axis (can be appended to).
+
+ncfile.title=f
+ncfile.subtitle='TAS Interpolations'
+
+lat = ncfile.createVariable('lat', np.float32, ('lat',))
+lat.long_name = 'latitude'
+
+lon = ncfile.createVariable('lon', np.float32, ('lon',))
+lon.long_name = 'longitude'
+
+time = ncfile.createVariable('time', np.float64, ('time',))
+time.units = 'months since 1950-01-01'
+time.long_name = 'time'
+
+temp = ncfile.createVariable('tas',np.float64,('time','lat','lon')) # note: unlimited dimension is leftmost
+temp.units = 'C'
+temp.standard_name = 't2m'
+
+
+#num_tpds = tas_data[0].shape[0] # number of time periods
+num_tpds = 12 # Last year worth of data
+for i in tqdm(range(num_tpds),desc = "Time Period",leave=False):
+    tm = tas_data[0].shape[0] - num_tpds + i
+    bilinear_interp = interp2d(np.array(lon_data[0]),np.array(lat_data[0]), tas_data[0][tm], kind = "linear")
+    temp[i,:,:] = np.flip(bilinear_interp(np.array(era5_lon), np.array(era5_lat)),axis = 0)
+
+ncfile.close()
+
+#yy = bilinear_interp(era5_lldf["lon"], era5_lldf["lat"])
+bilinear_interp(np.array(era5_lon[0:3]), np.array(era5_lat[10:13]))
+yy = bilinear_interp(np.array(era5_lon), np.array(era5_lat))
+bilinear_interp([0,150,300], -85)
+np.flip(bilinear_interp([0,150,300], [-85,85,0,40,90]),axis=0)
+
+
+# NN interpolator and IDW (not saved as netcdf)
+# Get cmpi6 mesh grid
+cm6_llmesh = np.meshgrid(np.array(lon_data[0]),np.array(lat_data[0]))
+cm6_lldf = pd.DataFrame()
+cm6_lldf["lon"] = cm6_llmesh[0].ravel()
+cm6_lldf["lat"] = cm6_llmesh[1].ravel()
+cm6_lldf["t2m"] = tas_data[0][tm].ravel()
+del cm6_llmesh
+
+# Get era5 mesh grid
+era5_llmesh = np.meshgrid(era5_lon,era5_lat)
+era5_lldf = pd.DataFrame()
+era5_lldf["lon"] = era5_llmesh[0].ravel()
+era5_lldf["lat"] = era5_llmesh[1].ravel()
+del era5_llmesh
+
+# Set interpolators
+nn_interp = KNeighborsRegressor(algorithm='kd_tree', n_neighbors=1, weights='uniform')
+idw_interp = KNeighborsRegressor(algorithm='kd_tree', n_neighbors=10, weights='distance')
+
+# Set training data (reference points) and interpolate
+nn_interp.fit(cm6_lldf[["lon","lat"]],cm6_lldf["t2m"])
+nn_pred = nn_interp.predict(era5_lldf)
+
+idw_interp.fit(cm6_lldf[["lon","lat"]],cm6_lldf["t2m"])
+iwd_pred = idw_interp.predict(era5_lldf)
+
+
+# Plot the results
+ncdata2 = nc.Dataset(cmip6intpath + f, "r")
+ncdata2["tas"][0].shape
+
+xx = np.where(era5["t2m"][:,0,:,:].time.isin(cftime.DatetimeGregorian(2014, 12, 1, 0, 0, 0, 0, 2, 15)))[0][0]
+resid = era5["t2m"][xx,0,:,:] - 272.15 - ncdata2["tas"][11]
+
+# Read data back in....
+#ncdata2 = nc.Dataset(cmip6intpath + f, "r")
+
+fig, ax = plt.subplots(1,3,figsize = (16,8)) 
+fig, ax = plt.subplots(1,3,figsize = (16,8)) 
+pcm0 = ax[0].pcolormesh(np.rot90(np.flip(era5["t2m"][xx,0,:,:].transpose() - 272.15),k=3),cmap = "coolwarm",vmin = -50,vmax = 40)
+#ax[0][1].pcolormesh(np.rot90(np.flip(ncdata2['tas'][0].transpose()),k=2))
+pcm1 = ax[1].pcolormesh(np.rot90(np.flip(ncdata2['tas'][0].transpose()),k=3),cmap = "coolwarm",vmin = -50,vmax = 40)
+pcm2 = ax[2].pcolormesh(np.rot90(np.flip(resid.transpose()),k=3),cmap = "PRGn")
+fig.colorbar(pcm0, ax = ax[0], location = "bottom")
+fig.colorbar(pcm1, ax = ax[1], location = "bottom")
+fig.colorbar(pcm2, ax = ax[2], location = "bottom")
+ax[0].set_title("ERA 5 Predictions", size = 18)
+ax[1].set_title("Access-CM2 Interpolations", size = 18)
+ax[2].set_title("Residuals", size = 18)
+plt.show()
+
+pcm0 = ax[0].pcolormesh(np.rot90(np.flip(era5["t2m"][xx,0,:,:].transpose() - 272.15),k=3),cmap = "coolwarm",vmin = -50,vmax = 40)
+#ax[0][1].pcolormesh(np.rot90(np.flip(ncdata2['tas'][0].transpose()),k=2))
+pcm1 = ax[1].pcolormesh(np.rot90(np.flip(ncdata2['tas'][0].transpose()),k=3),cmap = "coolwarm",vmin = -50,vmax = 40)
+pcm2 = ax[2].pcolormesh(np.rot90(np.flip(resid.transpose()),k=3),cmap = "PRGn")
+fig.colorbar(pcm0, ax = ax[0], location = "bottom")
+fig.colorbar(pcm1, ax = ax[1], location = "bottom")
+fig.colorbar(pcm2, ax = ax[2], location = "bottom")
+ax[0].set_title("ERA 5 Predictions", size = 18)
+ax[1].set_title("Access-CM2 Interpolations", size = 18)
+ax[2].set_title("Residuals", size = 18)
+plt.show()
+
+ncdata2.close()
+
+
+cmip6intpath = '/home/johnyannotty/NOAA_DATA/CMIP6_Interpolations/'
+cmpi6_interp_files = sorted(os.listdir(cmip6intpath))
+ncdata1 = nc.Dataset(cmip6intpath + cmpi6_interp_files[0], "r")
+
+#----------------------------------------------------------
+# CMIP6 interpolations using custom functions
+#----------------------------------------------------------
+cmip6intpath = '/home/johnyannotty/NOAA_DATA/CMIP6_Interpolations'
 f = file_list[0]
 #f = f.split("185")[0] + "2005-2015.nc"
 f = f.split("185")[0] + "2015.nc"
@@ -146,6 +264,13 @@ ncol = era5_lon.shape[0]
 #num_tpds = tas_data[0].shape[0] # number of time periods
 num_tpds = 1 # last 10 years of data
 era5_lat_flip = np.flip(era5_lat)
+
+#temp[0,:,:] = map_coordinates(np.array(lon_data[0]),np.array(lat_data[0]))
+i = 0
+tm = tas_data[0].shape[0] - num_tpds + i
+#bilin = interp2d(np.array(lon_data[0]),np.array(lat_data[0]), tas_data[0][tm], kind = "linear")
+#xx = bilin(era5_lon, era5_lat)
+#temp[i,:,:] = bilin(era5_lon, era5_lat)
 
 for i in tqdm(range(num_tpds),desc = "Time Period",leave=False):
     tm = tas_data[0].shape[0] - num_tpds + i

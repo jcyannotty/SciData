@@ -3,3 +3,6 @@ credentials.txt
 
 # pychace
 *.pyc
+
+# Specific files
+*climate_references.txt
