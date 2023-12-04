@@ -34,7 +34,7 @@ def get_timeperiod(f):
 #----------------------------------------------------------
 # TAS from list
 #----------------------------------------------------------
-cmip6path = "/home/johnyannotty/NOAA_DATA/CMIP6/historical"
+cmip6path = "/home/johnyannotty/NOAA_DATA/CMIP6/historical/"
 #filename = "tas_Amon_CESM2_historical_r1i1p1f1_gn_185001-201412.nc"
 #filename =  "tas_Amon_ACCESS-CM2_historical_r1i1p1f1_gn_185001-201412.nc"
 #dset = xr.open_dataset(cmip6path+filename, decode_times=True, use_cftime=True)
@@ -107,7 +107,7 @@ era5["t2m"][xx,0,:,:].plot(cmap = "coolwarm", ax = ax, vmin = 200, vmax = 325)
 #era5["t2m"][xx,0,:,:].plot(cmap = "coolwarm", ax = ax, vmin = -75, vmax = 50)
 plt.show()
 
-era5["t2m"][xx,0,:,:] = era5["t2m"][xx,0,:,:] - 272.15
+#era5["t2m"][xx,0,:,:] = era5["t2m"][xx,0,:,:] - 273.15
 
 #----------------------------------------------------------
 # CMIP6 bilinear interpolations 
