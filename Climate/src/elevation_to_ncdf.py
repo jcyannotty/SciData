@@ -21,16 +21,60 @@ from tqdm import tqdm
 from itertools import product
 from requests import Session
 
+from Climate.src.spatial_functions import elevation_function
+
 # Write as a netcdf file
 era5elevpath = "/home/johnyannotty/NOAA_DATA/ERA5_Elevations/"
-nlon = 100
-nlat = 120
-lon_list = np.linspace(235, 259.75, nlon).tolist()
-lat_list = np.linspace(30, 59.75, nlat).tolist()
+era5elevfile = "NA_elevations.nc"
 
-elev_df = pd.read_csv(era5elevpath + "SWUSA.txt")
+# Read in two different data sources
+from_df = True
+if from_df:
+    # Concat two dfs
+    df1 = pd.read_csv(era5elevpath + "SWUSA.txt")
+    df2 = pd.read_csv(era5elevpath + "NA_notSW.txt")
+    dfc = pd.concat([df1,df2])
+else:
+    # Merging two ncdfs
+    pass
 
-ncfile = nc.Dataset(era5elevpath + "SWUSA.nc",mode='w',format='NETCDF4_CLASSIC')
+
+# Sort dfc by lat and lon
+dfc.sort_values(["lon","lat"], inplace=True)
+
+# Get lat and lon lists
+lat_list = dfc["lat"].sort_values().unique().tolist()
+lon_list = dfc["lon"].sort_values().unique().tolist()
+lon_lat = [[x,y] for x in lon_list for y in lat_list]
+nlon = len(lon_list)
+nlat = len(lat_list)
+
+
+# Get missing long and lats
+get_elev = True
+if dfc.shape[0] < nlon*nlat:
+    dfll = pd.DataFrame(lon_lat)
+    dfll.columns = ["lon","lat"]
+    dfmiss = pd.merge(dfll,dfc, on = ["lon","lat"], how = "left")
+    dfmiss = dfmiss[dfmiss["elev"].isna()].reset_index(drop = True)
+
+    # Get the elevation for the missing values
+    if get_elev:
+        evmiss = elevation_function(dfmiss[["lon","lat"]].values)
+        dfe = pd.DataFrame(evmiss)
+        dfc = pd.concat([dfc,dfe]).reset_index(drop = True)
+
+        # Sort and update the remaining info
+        dfc.sort_values(["lon","lat"], inplace=True)
+
+        # Get lat and lon lists
+        lat_list = dfc["lat"].sort_values().unique().tolist()
+        lon_list = dfc["lon"].sort_values().unique().tolist()
+
+
+# Create updated netcdf
+ncfile = nc.Dataset(era5elevpath + era5elevfile,mode='w',format='NETCDF4_CLASSIC')
+
 lat_dim = ncfile.createDimension('lat', len(lat_list))     # latitude axis
 lon_dim = ncfile.createDimension('lon', len(lon_list))    # longitude axis
 
@@ -38,16 +82,16 @@ ncfile.title="ERA5-Elevations"
 
 lat = ncfile.createVariable('lat', np.float32, ('lat',))
 lat.long_name = 'latitude'
-lat = lat_list
+lat[:] = lat_list
 
 lon = ncfile.createVariable('lon', np.float32, ('lon',))
 lon.long_name = 'longitude'
-lon = lon_list
+lon[:] = lon_list
 
 elv = ncfile.createVariable('elev',np.float64,('lon','lat'))
 elv.units = 'm'
 elv.standard_name = 'Elevation'
-elev = np.array(elev_df["elev"].to_list()).reshape(nlon,nlat)
+elev = np.array(dfc["elev"].to_list()).reshape(nlon,nlat)
 elv[:,:] = elev
 
 ncfile.close()
