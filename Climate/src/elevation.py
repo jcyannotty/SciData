@@ -127,7 +127,7 @@ for b in range(nbatches):
     inputs = []
     for i in range(tc-1):
         inputs.append(lon_lat[idx[b*tc + i][0]:idx[b*tc + i+1][0]])    
-    # For the last core
+    # For the last coreidx
     inputs.append(lon_lat[idx[b*tc + tc-1][0]:end])
 
     #inputs = [lon_lat[idx[b*4][0]:idx[b*4 + 1][0]], lon_lat[idx[b*4+1][0]:idx[b*4+2][0]],
