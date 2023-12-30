@@ -78,36 +78,36 @@ def elevation_function(lonlat_list):
 # Configure Data region
 #-----------------------------------------------------------
 # Small SW Grid
-lon_list = np.linspace(235, 309.75, 300).tolist()
-lat_list = np.linspace(30, 69.75, 160).tolist()
+lon_list = np.linspace(12, 35.75, 96).tolist()
+lat_list = np.linspace(-35, -20.25, 60).tolist()
 lon_lat = [[x,y] for x in lon_list for y in lat_list]
 len(lon_lat)
 lldf = pd.DataFrame(lon_lat)
 lldf.columns = ["lon","lat"]
 
 # Get entire SW Grid
-swlon_list = np.linspace(235, 259.75, 100).tolist()
-swlat_list = np.linspace(30, 59.75, 120).tolist()
-swlon_lat = [[x,y] for x in swlon_list for y in swlat_list]
-len(swlon_lat)
+#swlon_list = np.linspace(235, 259.75, 100).tolist()
+#swlat_list = np.linspace(30, 59.75, 120).tolist()
+#swlon_lat = [[x,y] for x in swlon_list for y in swlat_list]
+#len(swlon_lat)
 
 
 # Remove the values you've already pulled
-lldf = lldf.loc[~(lldf["lon"].isin(swlon_list) & lldf["lat"].isin(swlat_list))]
-lon_lat = lldf.values.tolist()
-len(lon_lat)
+#lldf = lldf.loc[~(lldf["lon"].isin(swlon_list) & lldf["lat"].isin(swlat_list))]
+#lon_lat = lldf.values.tolist()
+#len(lon_lat)
 
 #-----------------------------------------------------------
 # API Call
 #-----------------------------------------------------------
 # St url for the API
 url = "https://epqs.nationalmap.gov/v1/json?"
-#era5elevpath = "/home/johnyannotty/NOAA_DATA/ERA5_Elevations/"
-era5elevpath = "/home/yannotty.1/"
+era5elevpath = "/home/johnyannotty/NOAA_DATA/ERA5_Elevations/"
+#era5elevpath = "/home/yannotty.1/"
 
 # Batch read
-nbatches = 25
-tc = 16
+nbatches = 5
+tc = 4
 nlat = len(lat_list)
 nlon = len(lon_list)
 n = len(lon_lat) 
@@ -147,8 +147,8 @@ for b in range(nbatches):
         temp_df = pd.DataFrame({"lon":out_lon,"lat":out_lat,"elev":out_elev})
         elev_df = pd.concat([elev_df,temp_df])
     
-    if (b%5) == 0 and b > 0: 
-        elev_df.to_csv(era5elevpath + "NA_notSW_" + str(b) + ".csv", index = False)
+    #if (b%5) == 0 and b > 0: 
+    #    elev_df.to_csv(era5elevpath + "NA_notSW_" + str(b) + ".csv", index = False)
 
     # Clear results
     out_elev = []
@@ -158,10 +158,10 @@ for b in range(nbatches):
 
 
 # Write final df to a csv
-elev_df.to_csv(era5elevpath + "NA_notSW_all.csv", index = False)
+elev_df.to_csv(era5elevpath + "era5_elvations_south_africa.csv", index = False)
 
 
-# df.loc[df["elev"]==-999]
+# elev_df.loc[elev_df["elev"]==-999]
 # elev = np.array(df["elev"].to_list()).reshape(nlon,nlat)
 
 # # Write file
@@ -211,4 +211,30 @@ elev_df.to_csv(era5elevpath + "NA_notSW_all.csv", index = False)
 
 # # Remove the values you've already pulled
 # swdf = swdf.loc[~(swdf["lon"].isin(lon_list) & swdf["lat"].isin(lat_list))]
+
+
+# import requests
+# rq = requests.get('https://api.open-elevation.com/api/v1/lookup?locations=10,10|20,20|41.161758,-8.583933')
+# rq.json()
+
+# rq = requests.get('https://api.open-elevation.com/api/v1/lookup?locations=62.75,235')
+# rq.json()["results"][0]
+
+
+# rq = requests.post('https://api.open-elevation.com/api/v1/lookup?locations=10,10|20,20|41.161758,-8.583933')
+# rq.status_code
+
+# r = requests.post('https://httpbin.org / post', data ={'key':'value'})
+
+# ",".join(list(lon_lat[0:50][0].reverse()))
+# ",".join(lon_lat[0:50][0])
+
+
+# lat_lon_str = "|".join([str(ll[1]) + "," + str(ll[0]) for ll in lon_lat[0:50]])
+# len(lat_lon_str)
+
+
+# rq = requests.get('https://api.open-elevation.com/api/v1/lookup?locations='+lat_lon_str)
+# rq.status_code
+# rq.json()
 

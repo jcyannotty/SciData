@@ -25,19 +25,22 @@ from Climate.src.spatial_functions import elevation_function
 
 # Write as a netcdf file
 era5elevpath = "/home/johnyannotty/NOAA_DATA/ERA5_Elevations/"
-era5elevfile = "NA_elevations.nc"
+era5elevfile = "elevation_api_all_(0-199_75)-(48_75-70)"
 
 # Read in two different data sources
 from_df = True
-if from_df:
-    # Concat two dfs
-    df1 = pd.read_csv(era5elevpath + "SWUSA.txt")
-    df2 = pd.read_csv(era5elevpath + "NA_notSW.txt")
-    dfc = pd.concat([df1,df2])
+from_two = False
+if from_two:
+    if from_df:
+        # Concat two dfs
+        df1 = pd.read_csv(era5elevpath + "SWUSA.txt")
+        df2 = pd.read_csv(era5elevpath + "NA_notSW.txt")
+        dfc = pd.concat([df1,df2])
+    else:
+        # Merging two ncdfs
+        pass
 else:
-    # Merging two ncdfs
-    pass
-
+    dfc = pd.read_csv(era5elevpath + era5elevfile + ".csv")
 
 # Sort dfc by lat and lon
 dfc.sort_values(["lon","lat"], inplace=True)
@@ -51,7 +54,7 @@ nlat = len(lat_list)
 
 
 # Get missing long and lats
-get_elev = True
+get_elev = False
 if dfc.shape[0] < nlon*nlat:
     dfll = pd.DataFrame(lon_lat)
     dfll.columns = ["lon","lat"]
@@ -70,10 +73,13 @@ if dfc.shape[0] < nlon*nlat:
         # Get lat and lon lists
         lat_list = dfc["lat"].sort_values().unique().tolist()
         lon_list = dfc["lon"].sort_values().unique().tolist()
+    else:
+        dfmiss[["lon","lat"]].to_csv(era5elevpath + era5elevfile + "_missing.csv")
+
 
 
 # Create updated netcdf
-ncfile = nc.Dataset(era5elevpath + era5elevfile,mode='w',format='NETCDF4_CLASSIC')
+ncfile = nc.Dataset(era5elevpath + era5elevfile + ".nc",mode='w',format='NETCDF4_CLASSIC')
 
 lat_dim = ncfile.createDimension('lat', len(lat_list))     # latitude axis
 lon_dim = ncfile.createDimension('lon', len(lon_list))    # longitude axis
