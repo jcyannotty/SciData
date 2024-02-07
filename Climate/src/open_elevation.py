@@ -7,6 +7,8 @@ Refernces:
     https://csidotinfo.wordpress.com/data/srtm-90m-digital-elevation-database-v4-1/
     https://www.pgc.umn.edu/data/rema/
 
+    https://cds.climate.copernicus.eu/cdsapp#!/dataset/derived-near-surface-meteorological-variables?tab=form
+
 """
 
 import urllib
@@ -63,7 +65,7 @@ water_lon_lat = wdf.values.tolist()
 lon_list = []
 lat_list = []
 lon_lat = []
-tag = "antartica"
+tag = "east_hemisphere"
 for dim in wr.regions[tag]:
     lon_min = dim["lon"][0] 
     lon_max = dim["lon"][1]
@@ -163,6 +165,10 @@ total_elev_df.to_csv(era5elevpath + "era5_elvations_" +tag+".csv", index = False
 #-----------------------------------------------------------
 # Read in data
 #-----------------------------------------------------------
-
 wh_elev = pd.read_csv(era5elevpath + "era5_elvations_west_hemisphere.csv")
 wh_elev[(wh_elev["lat"]>58) & (wh_elev["lat"]<59) & (wh_elev["lon"]>-135) & (wh_elev["lon"]<-133)]
+
+eh_elev = pd.read_csv(era5elevpath + "era5_elvations_east_hemisphere.csv")
+eh_elev[(eh_elev["lat"]>0) & (eh_elev["lat"]<45) & (eh_elev["lon"]>0) & (eh_elev["lon"]<40)]
+
+lldf[(lldf["lat"]>0) & (lldf["lat"]<45) & (lldf["lon"]>0) & (lldf["lon"]<40)]

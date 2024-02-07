@@ -73,6 +73,11 @@ Data Node: esgf-data.ucar.edu
 Version 20190308
 tas_Amon_CEMS2_historical_r1i1p1f1_gn_185001-201412.nc
 
+CMIP6.CMIP.KIOST.KIOST-ESM.historical.r1i1p1f1.Amon.tas.gr1
+Data Node: esgf
+tas_Amon_KIOST-ESM_historical_r1i1p1f1_gr1_185001-201412.nc'
+'https://esgf-data1.llnl.gov/thredds/fileServer/css03_data/CMIP6/CMIP/KIOST/KIOST-ESM/historical/r1i1p1f1/Amon/tas/gr1/v20210601/tas_Amon_KIOST-ESM_historical_r1i1p1f1_gr1_185001-201412.nc'
+
 
 #----------------------------------------------------------------------------------------------------
 Average Temperature (ta)
